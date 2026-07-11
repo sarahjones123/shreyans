@@ -10,7 +10,11 @@
 <link rel="stylesheet" href="css/auth.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
+<!-- <script src="js/auth.js"></script> -->
 <script src="js/guard.js"></script>
+<script src="js/cloud-storage.js"></script>
+<script src="js/local-storage.js"></script>
+<script src="js/storage.js"></script>
 <style>
   :root{
     --navy:#1B3A6B;
@@ -471,47 +475,38 @@ let STATE = {
 
 const STORAGE_AVAILABLE = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
 
-async function loadState(){
-  if(STORAGE_AVAILABLE){
-    try{
-      const res = await window.storage.get('lease-portfolio-v1', false);
-      if(res && res.value){
-        const parsed = JSON.parse(res.value);
-        STATE.leases = parsed.leases || [];
-      }
-    }catch(e){ /* no saved data yet, or bridge unavailable — fall through */ }
-  }
-  if(!STATE.leases.length){
-    try{
-      const raw = localStorage.getItem('lease-portfolio-v1');
-      if(raw){ STATE.leases = (JSON.parse(raw).leases)||[]; }
-    }catch(e){ /* ignore */ }
-  }
-  STATE.loaded = true;
-  if(STATE.leases.length){ STATE.view = 'portfolio'; }
-  render();
+async function loadState() {
+
+    const state = await Storage.load();
+
+    STATE.leases = state.leases || [];
+
+    STATE.loaded = true;
+
+    if (STATE.leases.length) {
+
+        STATE.view = "portfolio";
+
+    }
+
+    render();
+
 }
 
-async function saveState(){
-  const payload = JSON.stringify({ leases: STATE.leases });
-  let ok = false;
-  let reasons = [];
-  if(STORAGE_AVAILABLE){
-    try{
-      const res = await window.storage.set('lease-portfolio-v1', payload, false);
-      if(res) ok = true; else reasons.push('artifact store returned empty');
-    }
-    catch(e){ reasons.push('artifact store: ' + (e && e.message ? e.message : 'unavailable')); }
-  } else {
-    reasons.push('artifact store not present');
-  }
-  if(!ok){
-    try{ localStorage.setItem('lease-portfolio-v1', payload); ok = true; }
-    catch(e){ reasons.push('browser store blocked'); }
-  }
-  STATE.lastSaveOk = ok;
-  STATE.lastSaveReason = reasons.join(' · ');
-  setSaveStatus(ok);
+async function saveState() {
+
+    const result = await Storage.save({
+
+        leases: STATE.leases
+
+    });
+
+    STATE.lastSaveOk = result.success;
+
+    STATE.lastSaveReason = result.message || "";
+
+    setSaveStatus(result.success);
+
 }
 
 function setSaveStatus(ok){

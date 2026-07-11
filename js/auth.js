@@ -32,8 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Check if already logged in
+// Only check session on the login page
+const isLoginPage =
+    window.location.pathname.endsWith("index.html") ||
+    window.location.pathname === "/" ||
+    window.location.pathname.endsWith("/");
+
+if (isLoginPage) {
+
     checkSession();
+
+}
 
 });
 
