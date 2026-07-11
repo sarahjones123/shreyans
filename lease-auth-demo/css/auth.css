@@ -1,0 +1,51 @@
+#authBar {
+
+    position: fixed;
+
+    top: 12px;
+
+    right: 350px;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+#userEmail {
+
+    color: white;
+
+    font-size: 13px;
+
+    font-family: Arial, sans-serif;
+
+}
+
+#logoutBtn {
+
+    background: #C9A84C;
+
+    color: #0E2140;
+
+    border: none;
+
+    padding: 8px 14px;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+}
+
+#logoutBtn:hover {
+
+    opacity: .9;
+
+}

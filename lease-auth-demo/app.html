@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ind AS 116 — Lease Portfolio Workbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/guard.js"></script>
+<style>
+  :root{
+    --navy:#1B3A6B;
+    --navy-deep:#0E2140;
+    --gold:#C9A84C;
+    --gold-soft:#E4D4A8;
+    --paper:#FAF8F3;
+    --paper-line:#E7E0CC;
+    --card:#FFFFFF;
+    --ink:#23241F;
+    --ink-muted:#726C5C;
+    --ink-faint:#A79F8B;
+    --positive:#3F6B4F;
+    --negative:#A23E3E;
+    --border:#DCD4BC;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+
+  /* ---------- Header ---------- */
+  .topbar{
+    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-deep) 100%);
+    border-bottom:2px solid var(--gold);
+    padding:14px 20px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .topbar .firm{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+  }
+  .topbar h1{
+    font-family:'Playfair Display',serif;
+    font-weight:600;
+    font-size:19px;
+    color:#fff;
+    margin:2px 0 0 0;
+  }
+  .topbar .std-badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--navy-deep);
+    background:var(--gold);
+    padding:3px 8px;
+    border-radius:2px;
+    letter-spacing:0.04em;
+    align-self:center;
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{flex:1;display:flex;background:var(--paper);}
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background:var(--navy-deep);
+    padding:16px 0 16px 12px;
+  }
+  .sidebar .group-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:#8AA0C4;
+    padding:0 12px;
+    margin:14px 0 6px 0;
+  }
+  .tab{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:#1F3F72;
+    color:#DCE6F5;
+    border:none;
+    border-right:none;
+    padding:9px 20px 9px 12px;
+    margin-bottom:3px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    clip-path:polygon(0 0,100% 0,100% 68%,89% 100%,0 100%);
+    position:relative;
+  }
+  .tab .ref{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--gold-soft);
+    display:block;
+    letter-spacing:0.05em;
+  }
+  .tab.active{
+    background:var(--paper);
+    color:var(--navy-deep);
+    font-weight:600;
+  }
+  .tab.active .ref{color:var(--navy);}
+  .tab.pinned{background:var(--navy);}
+  .tab.pinned.active{background:var(--paper);}
+  .tab:hover:not(.active){background:#2A4C82;}
+  .add-lease-btn{
+    display:block;
+    width:calc(100% - 12px);
+    margin:10px 0 0 0;
+    background:transparent;
+    color:var(--gold-soft);
+    border:1px dashed #4A6494;
+    padding:8px 10px;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    cursor:pointer;
+    border-radius:2px;
+  }
+  .add-lease-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+  .content{
+    flex:1;
+    padding:22px 26px 60px 26px;
+    background-image: repeating-linear-gradient(var(--paper) 0px, var(--paper) 27px, var(--paper-line) 28px);
+    min-width:0;
+  }
+  .content-inner{max-width:1080px;}
+
+  h2.section-title{
+    font-family:'Playfair Display',serif;
+    font-size:22px;
+    font-weight:600;
+    color:var(--navy-deep);
+    margin:0 0 3px 0;
+  }
+  .section-sub{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-muted);
+    margin:0 0 18px 0;
+    letter-spacing:0.03em;
+  }
+
+  /* ---------- Sub nav within a lease ---------- */
+  .subnav{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);}
+  .subnav button{
+    background:none;border:none;
+    padding:9px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-muted);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .subnav button.active{color:var(--navy);border-bottom-color:var(--gold);}
+
+  /* ---------- Cards / forms ---------- */
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    margin-bottom:16px;
+  }
+  .card-title{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-muted);
+    margin:0 0 12px 0;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;}
+  .grid.g3{grid-template-columns:1fr 1fr 1fr;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field.span2{grid-column:span 2;}
+  .field label{font-size:12px;color:var(--ink-muted);font-weight:500;}
+  .field .hint{font-size:10.5px;color:var(--ink-faint);}
+  input[type=text],input[type=number],input[type=date],select{
+    border:1px solid var(--border);
+    background:#fff;
+    padding:8px 9px;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    border-radius:2px;
+    color:var(--ink);
+    width:100%;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--navy);}
+  .checkrow{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);}
+  .checkrow input{width:auto;}
+
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 18px;
+    border-radius:2px;
+    border:none;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-deep);}
+  .btn-ghost{background:transparent;color:var(--negative);border:1px solid var(--negative);}
+  .btn-ghost:hover{background:#FBEFEF;}
+  .btn-row{display:flex;gap:10px;justify-content:space-between;margin-top:6px;}
+
+  /* ---------- Summary strip ---------- */
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);padding:12px 14px;border-radius:2px;}
+  .stat .label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);font-family:'JetBrains Mono',monospace;}
+  .stat .value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--navy-deep);margin-top:4px;font-variant-numeric:tabular-nums;}
+
+  /* ---------- Tables ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.ledger th{
+    background:var(--navy);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:8px 10px;
+    text-align:right;
+    position:sticky;top:0;
+  }
+  table.ledger th:first-child, table.ledger th:nth-child(2){text-align:left;}
+  table.ledger td{
+    padding:6px 10px;
+    text-align:right;
+    font-family:'JetBrains Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    border-bottom:1px solid var(--paper-line);
+    color:var(--ink);
+  }
+  table.ledger td:first-child, table.ledger td:nth-child(2){text-align:left;font-family:'Inter',sans-serif;}
+  table.ledger tr:nth-child(even){background:#FCFAF4;}
+  table.ledger tr.total-row td{font-weight:700;border-top:2px solid var(--navy);border-bottom:none;background:#F1ECDB;}
+  .table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:2px;}
+
+  .je-block{margin-bottom:16px;}
+  .je-block .je-date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-muted);
+    margin-bottom:5px;
+    letter-spacing:0.03em;
+  }
+  table.je{width:100%;border-collapse:collapse;font-size:13px;}
+  table.je td{padding:5px 8px;border-bottom:1px dotted var(--paper-line);}
+  table.je td.acc{font-family:'Inter',sans-serif;}
+  table.je td.dr, table.je td.cr{font-family:'JetBrains Mono',monospace;text-align:right;width:110px;font-variant-numeric:tabular-nums;}
+  table.je tr.dr-line td.acc{padding-left:0;}
+  table.je tr.cr-line td.acc{padding-left:26px;color:var(--ink-muted);}
+  table.je thead td{font-size:10.5px;text-transform:uppercase;color:var(--ink-muted);font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);}
+
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-muted);
+  }
+  .empty-state h3{font-family:'Playfair Display',serif;color:var(--navy-deep);font-size:20px;}
+  .empty-state button{margin-top:14px;}
+
+  .assumption-box{
+    background:#F4EFDF;
+    border:1px solid var(--gold-soft);
+    border-left:3px solid var(--gold);
+    padding:10px 14px;
+    font-size:12px;
+    color:var(--ink-muted);
+    margin-bottom:16px;
+    border-radius:2px;
+  }
+  .assumption-box summary{cursor:pointer;font-weight:600;color:var(--navy-deep);font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;}
+  .assumption-box ul{margin:8px 0 0 0;padding-left:18px;}
+  .assumption-box li{margin-bottom:4px;}
+
+  select#fy-select{width:auto;display:inline-block;}
+
+  .disclosure-note{margin-bottom:26px;}
+  .disclosure-note h3{
+    font-family:'Playfair Display',serif;
+    font-size:16px;
+    color:var(--navy-deep);
+    border-bottom:1px solid var(--gold);
+    padding-bottom:6px;
+    margin-bottom:10px;
+  }
+  .disclosure-note p.note-desc{font-size:12.5px;color:var(--ink-muted);margin:-4px 0 10px 0;}
+
+  .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;letter-spacing:0.04em;}
+  .badge.current{background:#E4EEE7;color:var(--positive);}
+  .badge.noncurrent{background:#EFE7DD;color:var(--navy);}
+  .badge.exempt{background:#F0E9D6;color:#8A6D1E;}
+
+  .sens-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:900px){.sens-grid{grid-template-columns:1fr;}}
+
+  @media (max-width:760px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%;display:flex;overflow-x:auto;padding:10px;gap:6px;}
+    .tab{clip-path:none;white-space:nowrap;width:auto;margin-bottom:0;border-radius:2px;}
+    .group-label{display:none;}
+    .grid,.grid.g3{grid-template-columns:1fr;}
+    .stat-strip{grid-template-columns:1fr 1fr;}
+    .content{padding:16px;}
+  }
+</style>
+</head>
+<body>
+<div id="authBar">
+    <span id="userEmail"></span>
+
+    <button id="logoutBtn">
+        Logout
+    </button>
+</div>
+<div id="app"></div>
+
+<script>
+/* ======================= CONSTANTS & HELPERS ======================= */
+const FREQ_MONTHS = { monthly:1, quarterly:3, annual:12 };
+const FREQ_LABEL = { monthly:'Monthly', quarterly:'Quarterly', annual:'Annual' };
+const ASSET_CLASSES = ['Land & Building','Plant & Machinery','Vehicles','Office Equipment','Others'];
+
+function uid(){ return 'L-' + Math.random().toString(36).slice(2,8); }
+
+function fmtINR(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  const neg = n < 0;
+  const v = Math.round(Math.abs(n));
+  const s = '₹' + v.toLocaleString('en-IN');
+  return neg ? '(' + s + ')' : s;
+}
+function fmtNum(n,d=2){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = (d instanceof Date) ? d : new Date(d);
+  return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function addMonths(dateStr, months){
+  const d = new Date(dateStr);
+  const nd = new Date(d.getFullYear(), d.getMonth()+months, d.getDate());
+  return nd;
+}
+function fyKey(date){
+  const d = (date instanceof Date) ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = d.getMonth(); // 0=Jan .. 3=Apr
+  if(m >= 3) return `${y}-${String((y+1)%100).padStart(2,'0')}`;
+  return `${y-1}-${String(y%100).padStart(2,'0')}`;
+}
+function fyLabel(key){ return `FY ${key}`; }
+function fyEndDate(key){ // 31 Mar of the FY's second calendar year
+  const startYear = parseInt(key.split('-')[0],10);
+  return new Date(startYear+1, 2, 31);
+}
+function fyStartDate(key){
+  const startYear = parseInt(key.split('-')[0],10);
+  return new Date(startYear, 3, 1);
+}
+
+/* ======================= CALCULATION ENGINE ======================= */
+function computeLease(lease){
+  const mpp = FREQ_MONTHS[lease.frequency] || 1;
+  const nPeriods = Math.max(1, Math.round(lease.termMonths / mpp));
+  const periodRate = Math.pow(1 + (lease.discountRate/100), mpp/12) - 1;
+
+  const schedule = [];
+  for(let i=0;i<nPeriods;i++){
+    const yearsElapsed = Math.floor((i*mpp)/12);
+    const payment = lease.paymentAmount * Math.pow(1 + (lease.escalationPct||0)/100, yearsElapsed);
+    const date = addMonths(lease.commencementDate, i*mpp + (lease.timing==='arrears'? mpp : 0));
+    schedule.push({ index:i, date, payment });
+  }
+
+  let liability = 0;
+  schedule.forEach((p,i)=>{
+    const t = lease.timing==='advance' ? i : i+1;
+    liability += p.payment / Math.pow(1+periodRate, t);
+  });
+
+  const idc = lease.idc||0, prepay = lease.prepayments||0, incent = lease.incentives||0;
+  const rou = liability + idc + prepay - incent;
+
+  let opening = liability;
+  const amort = [];
+  schedule.forEach(p=>{
+    let interest, closing, openingShown;
+    if(lease.timing==='advance'){
+      openingShown = opening;
+      const afterPay = opening - p.payment;
+      interest = afterPay * periodRate;
+      closing = afterPay + interest;
+    } else {
+      openingShown = opening;
+      interest = opening * periodRate;
+      closing = opening + interest - p.payment;
+    }
+    amort.push({ index:p.index, date:p.date, opening:openingShown, payment:p.payment, interest, closing });
+    opening = closing;
+  });
+  // clean last-period rounding drift
+  if(amort.length){ amort[amort.length-1].closing = 0; }
+
+  const depPerPeriod = rou / nPeriods;
+  const totalInterest = amort.reduce((s,a)=>s+a.interest,0);
+  const totalPayments = amort.reduce((s,a)=>s+a.payment,0);
+
+  return { mpp, nPeriods, periodRate, schedule, liability, rou, amort, depPerPeriod, totalInterest, totalPayments, idc, prepay, incent };
+}
+
+function liabilityAsOf(calc, asOfDate){
+  // closing balance of the last period whose date <= asOfDate; if before commencement, return initial liability
+  let bal = calc.liability;
+  for(const row of calc.amort){
+    if(row.date <= asOfDate) bal = row.closing; else break;
+  }
+  return Math.max(0,bal);
+}
+
+function currentNonCurrentSplit(calc, reportingDate){
+  const twelveMonthsOut = new Date(reportingDate.getFullYear()+1, reportingDate.getMonth(), reportingDate.getDate());
+  const balNow = liabilityAsOf(calc, reportingDate);
+  const balPlus12 = liabilityAsOf(calc, twelveMonthsOut);
+  const current = Math.max(0, balNow - balPlus12);
+  const nonCurrent = Math.max(0, balPlus12);
+  return { current, nonCurrent, total: balNow };
+}
+
+/* ======================= STATE ======================= */
+let STATE = {
+  leases: [],
+  view: 'portfolio', // 'portfolio' | 'disclosures' | 'sensitivity' | leaseId
+  leaseSubTab: 'inputs', // 'inputs' | 'schedule' | 'journal'
+  editingDraft: null,
+  selectedFY: null,
+  sensLeaseId: null,
+  loaded: false
+};
+
+const STORAGE_AVAILABLE = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+
+async function loadState(){
+  if(STORAGE_AVAILABLE){
+    try{
+      const res = await window.storage.get('lease-portfolio-v1', false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        STATE.leases = parsed.leases || [];
+      }
+    }catch(e){ /* no saved data yet, or bridge unavailable — fall through */ }
+  }
+  if(!STATE.leases.length){
+    try{
+      const raw = localStorage.getItem('lease-portfolio-v1');
+      if(raw){ STATE.leases = (JSON.parse(raw).leases)||[]; }
+    }catch(e){ /* ignore */ }
+  }
+  STATE.loaded = true;
+  if(STATE.leases.length){ STATE.view = 'portfolio'; }
+  render();
+}
+
+async function saveState(){
+  const payload = JSON.stringify({ leases: STATE.leases });
+  let ok = false;
+  let reasons = [];
+  if(STORAGE_AVAILABLE){
+    try{
+      const res = await window.storage.set('lease-portfolio-v1', payload, false);
+      if(res) ok = true; else reasons.push('artifact store returned empty');
+    }
+    catch(e){ reasons.push('artifact store: ' + (e && e.message ? e.message : 'unavailable')); }
+  } else {
+    reasons.push('artifact store not present');
+  }
+  if(!ok){
+    try{ localStorage.setItem('lease-portfolio-v1', payload); ok = true; }
+    catch(e){ reasons.push('browser store blocked'); }
+  }
+  STATE.lastSaveOk = ok;
+  STATE.lastSaveReason = reasons.join(' · ');
+  setSaveStatus(ok);
+}
+
+function setSaveStatus(ok){
+  const s = document.getElementById('save-status');
+  if(!s) return;
+  if(ok){
+    s.textContent = 'Saved';
+    s.style.color = '#8AA0C4';
+  } else {
+    s.textContent = 'Auto-save unavailable — use Export JSON to keep your work';
+    s.title = STATE.lastSaveReason || '';
+    s.style.color = '#E4B8B8';
+  }
+}
+
+function exportPortfolio(){
+  const payload = JSON.stringify({ leases: STATE.leases }, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `lease-portfolio-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importPortfolio(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!Array.isArray(parsed.leases)) throw new Error('bad file');
+      STATE.leases = parsed.leases;
+      STATE.view = 'portfolio';
+      saveState();
+      render();
+    }catch(e){ alert('Could not read that file — expecting a portfolio JSON exported from this tool.'); }
+  };
+  reader.readAsText(file);
+}
+
+function blankLease(){
+  return {
+    id: uid(),
+    name: '',
+    assetClass: 'Plant & Machinery',
+    lessor: '',
+    commencementDate: new Date().toISOString().slice(0,10),
+    termMonths: 36,
+    paymentAmount: 0,
+    frequency: 'monthly',
+    timing: 'arrears',
+    escalationPct: 0,
+    discountRate: 10,
+    idc: 0,
+    prepayments: 0,
+    incentives: 0,
+    shortTerm: false,
+    lowValue: false
+  };
+}
+
+function allFYKeys(){
+  const keys = new Set();
+  STATE.leases.forEach(l=>{
+    if(l.shortTerm||l.lowValue) return;
+    const calc = computeLease(l);
+    calc.amort.forEach(a=> keys.add(fyKey(a.date)));
+    keys.add(fyKey(l.commencementDate));
+  });
+  return Array.from(keys).sort();
+}
+
+/* ======================= EXCEL EXPORT / IMPORT ======================= */
+function ensureXLSX(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX) return resolve(window.XLSX);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = ()=> resolve(window.XLSX);
+    s.onerror = ()=> reject(new Error('Could not load the Excel library — check your internet connection and try again.'));
+    document.head.appendChild(s);
+  });
+}
+
+// rows: array of arrays; each cell = primitive, or {f:'FORMULA'}, or {v:value,z:'numfmt'}
+function sheetFromRows(rows, colWidths){
+  const ws = {};
+  let maxC = 0;
+  rows.forEach((row,r)=>{
+    row.forEach((cell,c)=>{
+      if(cell===null || cell===undefined || cell==='') return;
+      const addr = XLSX.utils.encode_cell({r,c});
+      if(typeof cell === 'object'){
+        if(cell.f) ws[addr] = { t:'n', f:cell.f, ...(cell.z?{z:cell.z}:{}) };
+        else ws[addr] = { t:(typeof cell.v==='number'?'n':'s'), v:cell.v, ...(cell.z?{z:cell.z}:{}) };
+      } else if(typeof cell === 'number'){
+        ws[addr] = { t:'n', v:cell };
+      } else {
+        ws[addr] = { t:'s', v:String(cell) };
+      }
+      if(c>maxC) maxC=c;
+    });
+  });
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:rows.length-1, c:maxC}});
+  if(colWidths) ws['!cols'] = colWidths.map(w=>({wch:w}));
+  return ws;
+}
+
+function buildAmortSheet(lease, calc, sheetName){
+  const advance = lease.timing==='advance';
+  const n = calc.nPeriods;
+  const HEAD_ROW = 18;             // 1-indexed Excel row of the table header
+  const FIRST = HEAD_ROW + 1;      // first data row
+  const LAST = HEAD_ROW + n;       // last data row
+  const rows = [];
+  rows.push(['Begwani & Co. — Ind AS 116 Lease Workpaper']);
+  rows.push([`${lease.name||'Untitled'} · ${lease.lessor||''} · ${FREQ_LABEL[lease.frequency]}, payments in ${lease.timing}`]);
+  rows.push([]);
+  rows.push(['Parameter','Value']);
+  rows.push(['Base payment per period', lease.paymentAmount]);                       // B5
+  rows.push(['Annual escalation', {v:(lease.escalationPct||0)/100, z:'0.00%'}]);     // B6
+  rows.push(['IBR (annual)', {v:lease.discountRate/100, z:'0.00%'}]);                // B7
+  rows.push(['Months per period', calc.mpp]);                                        // B8
+  rows.push(['Period discount rate', {f:'(1+B7)^(B8/12)-1', z:'0.000000'}]);         // B9
+  rows.push(['Number of periods', n]);                                               // B10
+  rows.push(['Initial direct costs', lease.idc||0]);                                 // B11
+  rows.push(['Prepayments', lease.prepayments||0]);                                  // B12
+  rows.push(['Lease incentives', lease.incentives||0]);                              // B13
+  rows.push(['Initial lease liability (PV)', {v:calc.liability, z:'#,##0.00'}]);     // B14
+  rows.push(['Right-of-use asset', {f:'B14+B11+B12-B13', z:'#,##0.00'}]);            // B15
+  rows.push(['ROU depreciation / period', {f:'ROUND(B15/B10,2)', z:'#,##0.00'}]);    // B16
+  rows.push([]);
+  rows.push(['#','Date','Opening Liability','Interest','Payment','Closing Liability','ROU Depreciation']); // row 18
+  for(let i=0;i<n;i++){
+    const r = FIRST + i; // Excel row of this data line
+    const opening = (i===0) ? {f:'B14', z:'#,##0.00'} : {f:`F${r-1}`, z:'#,##0.00'};
+    const payment = {f:`ROUND($B$5*(1+$B$6)^FLOOR((A${r}-1)*$B$8/12,1),2)`, z:'#,##0.00'};
+    const interest = advance
+      ? {f:`ROUND((C${r}-E${r})*$B$9,2)`, z:'#,##0.00'}
+      : {f:`ROUND(C${r}*$B$9,2)`, z:'#,##0.00'};
+    const closing = advance
+      ? {f:`C${r}-E${r}+D${r}`, z:'#,##0.00'}
+      : {f:`C${r}+D${r}-E${r}`, z:'#,##0.00'};
+    rows.push([i+1, fmtDate(calc.amort[i].date), opening, interest, payment, closing, {f:'$B$16', z:'#,##0.00'}]);
+  }
+  rows.push(['','Total',
+    '',
+    {f:`SUM(D${FIRST}:D${LAST})`, z:'#,##0.00'},
+    {f:`SUM(E${FIRST}:E${LAST})`, z:'#,##0.00'},
+    '',
+    {f:`SUM(G${FIRST}:G${LAST})`, z:'#,##0.00'}]);
+  rows.push([]);
+  rows.push(['Tie-outs']);
+  rows.push(['Closing liability after final period (should be ~0)', {f:`F${LAST}`, z:'#,##0.00'}]);
+  rows.push(['Liability tie-out', {f:`IF(ABS(F${LAST})<1,"OK","CHECK")`}]);
+  rows.push(['Payments = PV + total interest', {f:`IF(ABS(SUM(E${FIRST}:E${LAST})-B14-SUM(D${FIRST}:D${LAST}))<1,"OK","CHECK")`}]);
+  rows.push(['ROU fully depreciated over term', {f:`IF(ABS(SUM(G${FIRST}:G${LAST})-B15)<1,"OK","CHECK")`}]);
+  return sheetFromRows(rows, [34,14,18,14,14,18,16]);
+}
+
+function buildExcelWorkbook(){
+  const wb = XLSX.utils.book_new();
+  const active = STATE.leases.filter(l=>!l.shortTerm && !l.lowValue);
+  const exempt = STATE.leases.filter(l=>l.shortTerm || l.lowValue);
+  const calcs = active.map(l=>({lease:l, calc:computeLease(l), ref:'L-'+String(STATE.leases.indexOf(l)+1).padStart(2,'0')}));
+
+  // --- Summary sheet with cross-sheet tie-outs ---
+  const sRows = [];
+  sRows.push(['Begwani & Co. — Ind AS 116 Portfolio Summary']);
+  sRows.push(['Generated', new Date().toLocaleDateString('en-IN')]);
+  sRows.push([]);
+  sRows.push(['Ref','Lease','Lessor','Term (mo)','IBR','Liability (PV)','ROU Asset','Total Interest']);
+  const firstData = 5, lastData = 4 + calcs.length;
+  calcs.forEach(({lease,calc,ref})=>{
+    const n = calc.nPeriods, FIRST = 19, LAST = 18+n;
+    sRows.push([ref, lease.name||'Untitled', lease.lessor||'', lease.termMonths,
+      {v:lease.discountRate/100, z:'0.00%'},
+      {f:`'${ref}'!B14`, z:'#,##0.00'},
+      {f:`'${ref}'!B15`, z:'#,##0.00'},
+      {f:`SUM('${ref}'!D${FIRST}:D${LAST})`, z:'#,##0.00'}]);
+  });
+  if(calcs.length){
+    sRows.push(['','Total','','','',
+      {f:`SUM(F${firstData}:F${lastData})`, z:'#,##0.00'},
+      {f:`SUM(G${firstData}:G${lastData})`, z:'#,##0.00'},
+      {f:`SUM(H${firstData}:H${lastData})`, z:'#,##0.00'}]);
+  }
+  if(exempt.length){
+    sRows.push([]);
+    sRows.push(['Recognition-exempt leases (expensed)']);
+    sRows.push(['Lease','Lessor','Frequency','Payment/period','Annualised expense']);
+    exempt.forEach(l=>{
+      sRows.push([l.name||'Untitled', l.lessor||'', FREQ_LABEL[l.frequency], l.paymentAmount,
+        {v:l.paymentAmount*(12/FREQ_MONTHS[l.frequency]), z:'#,##0.00'}]);
+    });
+  }
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(sRows,[8,30,22,10,8,16,16,16]), 'Summary');
+
+  // --- One sheet per lease ---
+  calcs.forEach(({lease,calc,ref})=>{
+    XLSX.utils.book_append_sheet(wb, buildAmortSheet(lease, calc, ref), ref);
+  });
+
+  // --- JE Register (flat, importable) ---
+  const jRows = [];
+  jRows.push(['Journal Entry Register — Ind AS 116']);
+  jRows.push([]);
+  jRows.push(['Date','Lease Ref','Lease','Narration','Account','Debit','Credit']);
+  calcs.forEach(({lease,calc,ref})=>{
+    const nm = lease.name||'Untitled';
+    const d0 = fmtDate(lease.commencementDate);
+    jRows.push([d0, ref, nm, 'Initial recognition', 'Right-of-Use Asset', {v:calc.rou,z:'#,##0.00'}, '']);
+    jRows.push([d0, ref, nm, 'Initial recognition', 'Lease Liability', '', {v:calc.liability,z:'#,##0.00'}]);
+    const netCash = calc.idc + calc.prepay - calc.incent;
+    if(netCash>0) jRows.push([d0, ref, nm, 'Initial recognition', 'Bank / Cash', '', {v:netCash,z:'#,##0.00'}]);
+    else if(netCash<0) jRows.push([d0, ref, nm, 'Initial recognition', 'Bank / Cash', {v:-netCash,z:'#,##0.00'}, '']);
+    calc.amort.forEach(a=>{
+      const dt = fmtDate(a.date), p = `Period ${a.index+1}`;
+      jRows.push([dt, ref, nm, p+' — interest accrual', 'Interest Expense (Finance Cost)', {v:a.interest,z:'#,##0.00'}, '']);
+      jRows.push([dt, ref, nm, p+' — interest accrual', 'Lease Liability', '', {v:a.interest,z:'#,##0.00'}]);
+      jRows.push([dt, ref, nm, p+' — lease payment', 'Lease Liability', {v:a.payment,z:'#,##0.00'}, '']);
+      jRows.push([dt, ref, nm, p+' — lease payment', 'Bank / Cash', '', {v:a.payment,z:'#,##0.00'}]);
+      jRows.push([dt, ref, nm, p+' — ROU depreciation', 'Depreciation Expense — ROU', {v:calc.depPerPeriod,z:'#,##0.00'}, '']);
+      jRows.push([dt, ref, nm, p+' — ROU depreciation', 'Accumulated Depreciation — ROU', '', {v:calc.depPerPeriod,z:'#,##0.00'}]);
+    });
+  });
+  const jFirst = 4, jLast = jRows.length;
+  jRows.push(['','','','Totals','', {f:`SUM(F${jFirst}:F${jLast})`, z:'#,##0.00'}, {f:`SUM(G${jFirst}:G${jLast})`, z:'#,##0.00'}]);
+  jRows.push(['','','','Dr = Cr tie-out','', {f:`IF(ROUND(SUM(F${jFirst}:F${jLast})-SUM(G${jFirst}:G${jLast}),2)=0,"OK","OUT OF BALANCE")`}, '']);
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(jRows,[12,8,26,30,34,14,14]), 'JE Register');
+
+  return wb;
+}
+
+async function exportExcel(){
+  try{
+    await ensureXLSX();
+    if(!STATE.leases.length){ alert('Add at least one lease before exporting.'); return; }
+    const wb = buildExcelWorkbook();
+    const stamp = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `ind-as-116-workpaper-${stamp}.xlsx`);
+  }catch(e){ alert(e.message); }
+}
+
+const IMPORT_HEADERS = ['Name','Lessor','Asset Class','Commencement (YYYY-MM-DD)','Term (months)','Payment per period','Frequency (monthly/quarterly/annual)','Timing (arrears/advance)','Escalation % p.a.','IBR % p.a.','Initial direct costs','Prepayments','Incentives','Short-term (Y/N)','Low-value (Y/N)'];
+
+async function downloadImportTemplate(){
+  try{
+    await ensureXLSX();
+    const rows = [
+      IMPORT_HEADERS,
+      ['Factory Shed — Howrah','ABC Estates','Land & Building','2026-04-01',36,100000,'monthly','arrears',5,10,0,0,0,'N','N'],
+      ['Forklift','XYZ Leasing','Plant & Machinery','2026-07-01',24,45000,'quarterly','advance',0,9.5,12000,0,0,'N','N']
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheetFromRows(rows,[26,20,20,24,12,16,30,22,14,10,16,12,12,14,14]), 'Leases');
+    XLSX.writeFile(wb, 'lease-import-template.xlsx');
+  }catch(e){ alert(e.message); }
+}
+
+async function importExcel(file){
+  try{
+    await ensureXLSX();
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+    if(!raw.length){ alert('The file appears to be empty.'); return; }
+    // locate header row (first row whose first cell matches 'Name')
+    let hIdx = raw.findIndex(r=> String(r[0]).trim().toLowerCase()==='name');
+    if(hIdx===-1){ alert('Could not find the header row. Use the import template — the first column must be "Name".'); return; }
+    const added = [], errors = [];
+    const yn = v => ['y','yes','true','1'].includes(String(v).trim().toLowerCase());
+    const normFreq = v => { const s=String(v).trim().toLowerCase(); return ['monthly','quarterly','annual'].includes(s)?s:(s==='annually'||s==='yearly'?'annual':null); };
+    const normTiming = v => { const s=String(v).trim().toLowerCase(); if(['arrears','arrear','in-arrears'].includes(s))return 'arrears'; if(['advance','in-advance'].includes(s))return 'advance'; return null; };
+    const toDate = v => {
+      if(v instanceof Date) return v.toISOString().slice(0,10);
+      if(typeof v === 'number'){ const d = new Date(Math.round((v-25569)*86400*1000)); return d.toISOString().slice(0,10); }
+      const s = String(v).trim();
+      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s); return isNaN(d) ? null : d.toISOString().slice(0,10);
+    };
+    for(let i=hIdx+1;i<raw.length;i++){
+      const r = raw[i];
+      if(!r || !String(r[0]).trim()) continue; // skip blank rows
+      const rowNo = i+1;
+      const freq = normFreq(r[6]); const timing = normTiming(r[7]); const date = toDate(r[3]);
+      const term = parseFloat(r[4]); const pay = parseFloat(r[5]); const ibr = parseFloat(r[9]);
+      if(!freq){ errors.push(`Row ${rowNo}: frequency "${r[6]}" not recognised`); continue; }
+      if(!timing){ errors.push(`Row ${rowNo}: timing "${r[7]}" not recognised`); continue; }
+      if(!date){ errors.push(`Row ${rowNo}: commencement date "${r[3]}" not readable`); continue; }
+      if(!(term>0)){ errors.push(`Row ${rowNo}: term must be a positive number`); continue; }
+      if(!(pay>=0)){ errors.push(`Row ${rowNo}: payment amount missing`); continue; }
+      if(!(ibr>=0)){ errors.push(`Row ${rowNo}: IBR missing`); continue; }
+      added.push({
+        id: uid(),
+        name: String(r[0]).trim(),
+        lessor: String(r[1]||'').trim(),
+        assetClass: ASSET_CLASSES.includes(String(r[2]).trim()) ? String(r[2]).trim() : 'Others',
+        commencementDate: date,
+        termMonths: term,
+        paymentAmount: pay,
+        frequency: freq,
+        timing: timing,
+        escalationPct: parseFloat(r[8])||0,
+        discountRate: ibr,
+        idc: parseFloat(r[10])||0,
+        prepayments: parseFloat(r[11])||0,
+        incentives: parseFloat(r[12])||0,
+        shortTerm: yn(r[13]),
+        lowValue: yn(r[14])
+      });
+    }
+    if(!added.length){ alert('No valid lease rows found.' + (errors.length? '\n\n'+errors.join('\n'):'')); return; }
+    STATE.leases = STATE.leases.concat(added);
+    STATE.view = 'portfolio';
+    saveState();
+    render();
+    alert(`Imported ${added.length} lease${added.length!==1?'s':''}.` + (errors.length? `\n\nSkipped ${errors.length} row(s):\n`+errors.join('\n') : ''));
+  }catch(e){ alert('Import failed: ' + e.message); }
+}
+
+/* ======================= RENDER ======================= */
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content; }
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <div class="firm">Begwani &amp; Co. · Chartered Accountants</div>
+        <h1>Lease Portfolio Workbook</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="save-status" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#8AA0C4;"></span>
+        <button class="btn" style="background:transparent;border:1px solid #4A6494;color:#DCE6F5;padding:6px 10px;font-size:11px;" data-action="export-portfolio">Export JSON</button>
+        <label class="btn" style="background:transparent;border:1px solid #4A6494;color:#DCE6F5;padding:6px 10px;font-size:11px;cursor:pointer;">
+          Import JSON<input type="file" id="import-input" accept="application/json" style="display:none;">
+        </label>
+        <div class="std-badge">IND AS 116</div>
+      </div>
+    </div>
+    <div class="layout">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="content"><div class="content-inner" id="content"></div></div>
+    </div>
+  `;
+  renderSidebar();
+  renderContent();
+  attachGlobalListeners();
+  if(typeof STATE.lastSaveOk !== 'undefined') setSaveStatus(STATE.lastSaveOk);
+}
+
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  html += pinnedTab('portfolio','Portfolio Dashboard','DASH');
+  html += pinnedTab('disclosures','Disclosures','NOTE');
+  html += pinnedTab('sensitivity','Sensitivity','SENS');
+  html += `<div class="group-label">Lease Register</div>`;
+  STATE.leases.forEach((l,i)=>{
+    const active = STATE.view === l.id;
+    const ref = 'L-' + String(i+1).padStart(2,'0');
+    html += `<button class="tab ${active?'active':''}" data-action="goto-lease" data-id="${l.id}">
+      <span class="ref">${ref}${l.shortTerm||l.lowValue?' · exempt':''}</span>${escapeHtml(l.name||'Untitled lease')}
+    </button>`;
+  });
+  html += `<button class="add-lease-btn" data-action="new-lease">+ Add lease</button>`;
+  sb.innerHTML = html;
+}
+function pinnedTab(id,label,ref){
+  const active = STATE.view === id;
+  return `<button class="tab pinned ${active?'active':''}" data-action="goto-view" data-id="${id}">
+    <span class="ref">${ref}</span>${label}
+  </button>`;
+}
+
+function renderContent(){
+  const c = document.getElementById('content');
+  if(STATE.view === 'portfolio') return renderPortfolio(c);
+  if(STATE.view === 'disclosures') return renderDisclosures(c);
+  if(STATE.view === 'sensitivity') return renderSensitivity(c);
+  const lease = STATE.leases.find(l=>l.id===STATE.view);
+  if(!lease){ STATE.view='portfolio'; return renderPortfolio(c); }
+  renderLeaseDetail(c, lease);
+}
+
+/* ---------- Portfolio Dashboard ---------- */
+function dataCardHtml(){
+  return `
+    <div class="card">
+      <div class="card-title">Workpaper &amp; Data</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <button class="btn btn-primary" data-action="export-excel">Download Excel Workpaper</button>
+        <button class="btn" style="background:#EFE9D8;color:var(--navy-deep);border:1px solid var(--border);" data-action="download-template">Import Template (.xlsx)</button>
+        <label class="btn" style="background:#EFE9D8;color:var(--navy-deep);border:1px solid var(--border);cursor:pointer;">
+          Import Leases from Excel<input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display:none;">
+        </label>
+      </div>
+      <p class="hint" style="margin-top:8px;color:var(--ink-faint);font-size:11px;">Workpaper contains live formulas &amp; tie-outs: Summary, one schedule per lease, and a flat JE register with a Dr=Cr check. Import appends leases from the template format.</p>
+    </div>`;
+}
+
+function renderPortfolio(c){
+  if(!STATE.leases.length){
+    c.innerHTML = `
+      <div class="empty-state">
+        <h3>No leases on file yet</h3>
+        <p>Add a lease to start building liability schedules, journal entries and Ind AS 116 disclosures — or bulk-import a portfolio from Excel.</p>
+        <button class="btn btn-primary" data-action="new-lease">+ Add your first lease</button>
+      </div>
+      ${dataCardHtml()}`;
+    return;
+  }
+  const active = STATE.leases.filter(l=>!l.shortTerm && !l.lowValue);
+  const exempt = STATE.leases.filter(l=>l.shortTerm || l.lowValue);
+  const reportingDate = new Date();
+  let totalROU=0, totalLiab=0, totalCurrent=0, totalNonCurrent=0, totalInterestFY=0, totalDepFY=0;
+  const fyNow = fyKey(reportingDate);
+
+  const rows = active.map((l,i)=>{
+    const calc = computeLease(l);
+    const split = currentNonCurrentSplit(calc, reportingDate);
+    totalROU += calc.rou; totalLiab += split.total; totalCurrent += split.current; totalNonCurrent += split.nonCurrent;
+    calc.amort.forEach(a=>{ if(fyKey(a.date)===fyNow){ totalInterestFY += a.interest; totalDepFY += calc.depPerPeriod; }});
+    return { l, calc, split, ref:'L-'+String(STATE.leases.indexOf(l)+1).padStart(2,'0') };
+  });
+
+  c.innerHTML = `
+    <h2 class="section-title">Portfolio Dashboard</h2>
+    <p class="section-sub">As of ${fmtDate(reportingDate)} · ${active.length} capitalised lease${active.length!==1?'s':''}${exempt.length?`, ${exempt.length} exempt (short-term / low-value)`:''}</p>
+
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Total ROU Assets</div><div class="value">${fmtINR(totalROU)}</div></div>
+      <div class="stat"><div class="label">Total Lease Liability</div><div class="value">${fmtINR(totalLiab)}</div></div>
+      <div class="stat"><div class="label">Current Portion</div><div class="value">${fmtINR(totalCurrent)}</div></div>
+      <div class="stat"><div class="label">Non-Current Portion</div><div class="value">${fmtINR(totalNonCurrent)}</div></div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Interest Expense (${fyLabel(fyNow)})</div><div class="value">${fmtINR(totalInterestFY)}</div></div>
+      <div class="stat"><div class="label">ROU Depreciation (${fyLabel(fyNow)})</div><div class="value">${fmtINR(totalDepFY)}</div></div>
+      <div class="stat"><div class="label">Exempt Lease Expense (annualised)</div><div class="value">${fmtINR(exempt.reduce((s,l)=>{
+          const mpp=FREQ_MONTHS[l.frequency]; return s + l.paymentAmount * (12/mpp);
+        },0))}</div></div>
+      <div class="stat"><div class="label">Total Leases on Register</div><div class="value">${STATE.leases.length}</div></div>
+    </div>
+
+    ${dataCardHtml()}
+
+    <div class="card">
+      <div class="card-title">Register</div>
+      <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr>
+          <th>Ref</th><th>Asset / Lessor</th><th>Term</th><th>IBR</th><th>ROU Asset</th><th>Liability</th><th>Current</th><th>Non-Current</th>
+        </tr></thead>
+        <tbody>
+        ${rows.map(r=>`
+          <tr>
+            <td><a href="#" data-action="goto-lease" data-id="${r.l.id}" style="color:var(--navy);text-decoration:none;font-family:'JetBrains Mono',monospace;">${r.ref}</a></td>
+            <td>${escapeHtml(r.l.name||'Untitled')}<br><span style="color:var(--ink-faint);font-size:11px;">${escapeHtml(r.l.lessor||'')}</span></td>
+            <td>${r.l.termMonths} mo</td>
+            <td>${fmtNum(r.l.discountRate,1)}%</td>
+            <td>${fmtINR(r.calc.rou)}</td>
+            <td>${fmtINR(r.split.total)}</td>
+            <td>${fmtINR(r.split.current)}</td>
+            <td>${fmtINR(r.split.nonCurrent)}</td>
+          </tr>`).join('')}
+          <tr class="total-row"><td colspan="4">Total</td><td>${fmtINR(totalROU)}</td><td>${fmtINR(totalLiab)}</td><td>${fmtINR(totalCurrent)}</td><td>${fmtINR(totalNonCurrent)}</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    ${exempt.length ? `
+    <div class="card">
+      <div class="card-title">Short-term / Low-value Leases (expensed, off-balance-sheet)</div>
+      <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr><th>Asset</th><th>Lessor</th><th>Frequency</th><th>Payment</th><th>Annualised Expense</th></tr></thead>
+        <tbody>
+        ${exempt.map(l=>{
+          const mpp=FREQ_MONTHS[l.frequency];
+          return `<tr><td>${escapeHtml(l.name||'Untitled')}</td><td>${escapeHtml(l.lessor||'')}</td><td>${FREQ_LABEL[l.frequency]}</td><td>${fmtINR(l.paymentAmount)}</td><td>${fmtINR(l.paymentAmount*(12/mpp))}</td></tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+/* ---------- Lease detail (Inputs / Schedule / Journal) ---------- */
+function renderLeaseDetail(c, lease){
+  const idx = STATE.leases.indexOf(lease)+1;
+  const ref = 'L-'+String(idx).padStart(2,'0');
+  let body = '';
+  if(STATE.leaseSubTab==='inputs') body = renderInputsForm(lease);
+  else if(STATE.leaseSubTab==='schedule') body = renderScheduleView(lease);
+  else body = renderJournalView(lease);
+
+  c.innerHTML = `
+    <h2 class="section-title">${escapeHtml(lease.name||'Untitled lease')}</h2>
+    <p class="section-sub">${ref} · ${escapeHtml(lease.lessor||'Lessor not specified')}</p>
+    <div class="subnav">
+      <button class="${STATE.leaseSubTab==='inputs'?'active':''}" data-action="lease-subtab" data-tab="inputs">Inputs</button>
+      <button class="${STATE.leaseSubTab==='schedule'?'active':''}" data-action="lease-subtab" data-tab="schedule">Amortisation Schedule</button>
+      <button class="${STATE.leaseSubTab==='journal'?'active':''}" data-action="lease-subtab" data-tab="journal">Journal Entries</button>
+    </div>
+    ${body}
+  `;
+}
+
+function renderInputsForm(lease){
+  return `
+    <form id="lease-form">
+      <div class="card">
+        <div class="card-title">Identification</div>
+        <div class="grid">
+          <div class="field"><label>Asset / Lease description</label><input type="text" name="name" value="${escapeAttr(lease.name)}" required></div>
+          <div class="field"><label>Lessor</label><input type="text" name="lessor" value="${escapeAttr(lease.lessor)}"></div>
+          <div class="field"><label>Asset class</label>
+            <select name="assetClass">${ASSET_CLASSES.map(ac=>`<option value="${ac}" ${lease.assetClass===ac?'selected':''}>${ac}</option>`).join('')}</select>
+          </div>
+          <div class="field"><label>Commencement date</label><input type="date" name="commencementDate" value="${lease.commencementDate}" required></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Term &amp; Payments</div>
+        <div class="grid g3">
+          <div class="field"><label>Lease term (months)</label><input type="number" name="termMonths" min="1" value="${lease.termMonths}" required></div>
+          <div class="field"><label>Payment frequency</label>
+            <select name="frequency">${Object.keys(FREQ_LABEL).map(f=>`<option value="${f}" ${lease.frequency===f?'selected':''}>${FREQ_LABEL[f]}</option>`).join('')}</select>
+          </div>
+          <div class="field"><label>Payment timing</label>
+            <select name="timing"><option value="arrears" ${lease.timing==='arrears'?'selected':''}>Arrears (in-arrear)</option><option value="advance" ${lease.timing==='advance'?'selected':''}>Advance</option></select>
+          </div>
+          <div class="field"><label>Payment amount per period (₹)</label><input type="number" name="paymentAmount" min="0" step="0.01" value="${lease.paymentAmount}" required></div>
+          <div class="field"><label>Annual escalation (%)</label><input type="number" name="escalationPct" step="0.01" value="${lease.escalationPct}"><span class="hint">Applied on each commencement anniversary</span></div>
+          <div class="field"><label>Incremental borrowing rate (% p.a.)</label><input type="number" name="discountRate" min="0" step="0.01" value="${lease.discountRate}" required></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Initial Measurement Adjustments</div>
+        <div class="grid g3">
+          <div class="field"><label>Initial direct costs (₹)</label><input type="number" name="idc" min="0" step="0.01" value="${lease.idc}"></div>
+          <div class="field"><label>Prepayments made (₹)</label><input type="number" name="prepayments" min="0" step="0.01" value="${lease.prepayments}"></div>
+          <div class="field"><label>Lease incentives received (₹)</label><input type="number" name="incentives" min="0" step="0.01" value="${lease.incentives}"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recognition Exemptions</div>
+        <div class="grid">
+          <label class="checkrow"><input type="checkbox" name="shortTerm" ${lease.shortTerm?'checked':''}> Short-term lease (≤ 12 months, no purchase option)</label>
+          <label class="checkrow"><input type="checkbox" name="lowValue" ${lease.lowValue?'checked':''}> Low-value asset lease</label>
+        </div>
+        <p class="hint" style="margin-top:8px;">If either is checked, this lease is expensed on a straight-line basis and excluded from ROU/liability recognition, amortisation and balance-sheet disclosures.</p>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" data-action="delete-lease" data-id="${lease.id}">Delete lease</button>
+        <button type="submit" class="btn btn-primary">Save lease</button>
+      </div>
+    </form>
+  `;
+}
+
+function renderScheduleView(lease){
+  if(lease.shortTerm||lease.lowValue){
+    return `<div class="card"><p>This lease is recognition-exempt (short-term / low-value) and is expensed on a straight-line basis — no amortisation schedule applies.</p></div>`;
+  }
+  const calc = computeLease(lease);
+  return `
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Initial Lease Liability</div><div class="value">${fmtINR(calc.liability)}</div></div>
+      <div class="stat"><div class="label">Initial ROU Asset</div><div class="value">${fmtINR(calc.rou)}</div></div>
+      <div class="stat"><div class="label">Total Interest over Term</div><div class="value">${fmtINR(calc.totalInterest)}</div></div>
+      <div class="stat"><div class="label">Period Discount Rate</div><div class="value">${fmtNum(calc.periodRate*100,3)}%</div></div>
+    </div>
+    <details class="assumption-box">
+      <summary>Methodology &amp; assumptions</summary>
+      <ul>
+        <li>Period rate derived by compounding the annual IBR to the payment frequency: (1+IBR)^(months/12) − 1.</li>
+        <li>ROU depreciation is straight-line over the lease term, allocated evenly per payment period (₹${fmtNum(calc.depPerPeriod,0)} per period).</li>
+        <li>Escalation is applied once per commencement anniversary, compounding on the base payment.</li>
+        <li>${lease.timing==='advance' ? 'Payments in advance reduce the opening balance before interest accrues for that period.' : 'Payments in arrears accrue interest on the full opening balance before being applied.'}</li>
+      </ul>
+    </details>
+    <div class="card">
+      <div class="card-title">Lease Liability &amp; ROU Amortisation — ${FREQ_LABEL[lease.frequency]}</div>
+      <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr><th>#</th><th>Date</th><th>Opening Liability</th><th>Interest</th><th>Payment</th><th>Closing Liability</th><th>ROU Depreciation</th></tr></thead>
+        <tbody>
+        ${calc.amort.map(a=>`
+          <tr>
+            <td>${a.index+1}</td>
+            <td>${fmtDate(a.date)}</td>
+            <td>${fmtINR(a.opening)}</td>
+            <td>${fmtINR(a.interest)}</td>
+            <td>${fmtINR(a.payment)}</td>
+            <td>${fmtINR(a.closing)}</td>
+            <td>${fmtINR(calc.depPerPeriod)}</td>
+          </tr>`).join('')}
+          <tr class="total-row"><td colspan="3">Total</td><td>${fmtINR(calc.totalInterest)}</td><td>${fmtINR(calc.totalPayments)}</td><td>—</td><td>${fmtINR(calc.rou)}</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderJournalView(lease){
+  if(lease.shortTerm||lease.lowValue){
+    const mpp = FREQ_MONTHS[lease.frequency];
+    return `
+      <div class="card">
+        <div class="card-title">Recurring Entry — Exempt Lease</div>
+        <div class="je-block">
+          <div class="je-date">Each ${FREQ_LABEL[lease.frequency].toLowerCase()} period</div>
+          <table class="je">
+            <thead><tr><td class="acc">Account</td><td class="dr">Debit</td><td class="cr">Credit</td></tr></thead>
+            <tbody>
+              <tr class="dr-line"><td class="acc">Lease Rent Expense</td><td class="dr">${fmtINR(lease.paymentAmount)}</td><td class="cr"></td></tr>
+              <tr class="cr-line"><td class="acc">Bank / Cash</td><td class="dr"></td><td class="cr">${fmtINR(lease.paymentAmount)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+  const calc = computeLease(lease);
+  const cashAtInception = calc.idc + calc.prepay - calc.incent;
+  let initLines = `<tr class="dr-line"><td class="acc">Right-of-Use Asset</td><td class="dr">${fmtINR(calc.rou)}</td><td class="cr"></td></tr>
+    <tr class="cr-line"><td class="acc">Lease Liability</td><td class="dr"></td><td class="cr">${fmtINR(calc.liability)}</td></tr>`;
+  if(cashAtInception > 0){
+    initLines += `<tr class="cr-line"><td class="acc">Bank / Cash (IDC + prepayments, net of incentives)</td><td class="dr"></td><td class="cr">${fmtINR(cashAtInception)}</td></tr>`;
+  } else if(cashAtInception < 0){
+    initLines += `<tr class="dr-line"><td class="acc">Bank / Cash (net incentive received)</td><td class="dr">${fmtINR(-cashAtInception)}</td><td class="cr"></td></tr>`;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-title">Initial Recognition — ${fmtDate(lease.commencementDate)}</div>
+      <div class="je-block">
+        <table class="je">
+          <thead><tr><td class="acc">Account</td><td class="dr">Debit</td><td class="cr">Credit</td></tr></thead>
+          <tbody>${initLines}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recurring Entries — Per ${FREQ_LABEL[lease.frequency]} Period</div>
+      <div class="table-scroll">
+      ${calc.amort.map(a=>`
+        <div class="je-block">
+          <div class="je-date">Period ${a.index+1} · ${fmtDate(a.date)}</div>
+          <table class="je">
+            <tbody>
+              <tr class="dr-line"><td class="acc">Interest Expense (Finance Cost)</td><td class="dr">${fmtINR(a.interest)}</td><td class="cr"></td></tr>
+              <tr class="cr-line"><td class="acc">Lease Liability</td><td class="dr"></td><td class="cr">${fmtINR(a.interest)}</td></tr>
+              <tr class="dr-line"><td class="acc">Lease Liability</td><td class="dr">${fmtINR(a.payment)}</td><td class="cr"></td></tr>
+              <tr class="cr-line"><td class="acc">Bank / Cash</td><td class="dr"></td><td class="cr">${fmtINR(a.payment)}</td></tr>
+              <tr class="dr-line"><td class="acc">Depreciation Expense — ROU Asset</td><td class="dr">${fmtINR(calc.depPerPeriod)}</td><td class="cr"></td></tr>
+              <tr class="cr-line"><td class="acc">Accumulated Depreciation — ROU Asset</td><td class="dr"></td><td class="cr">${fmtINR(calc.depPerPeriod)}</td></tr>
+            </tbody>
+          </table>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Disclosures ---------- */
+function renderDisclosures(c){
+  const fys = allFYKeys();
+  if(!fys.length){
+    c.innerHTML = `<div class="empty-state"><h3>No data yet</h3><p>Add at least one capitalised lease to generate Ind AS 116 disclosures.</p></div>`;
+    return;
+  }
+  if(!STATE.selectedFY || !fys.includes(STATE.selectedFY)) STATE.selectedFY = fys[fys.length-1];
+  const fy = STATE.selectedFY;
+  const fyStart = fyStartDate(fy), fyEnd = fyEndDate(fy);
+  const active = STATE.leases.filter(l=>!l.shortTerm && !l.lowValue);
+  const exempt = STATE.leases.filter(l=>l.shortTerm || l.lowValue);
+
+  let rouOpen=0, rouAdd=0, rouDep=0, rouClose=0;
+  let liabOpen=0, liabAdd=0, liabInt=0, liabPay=0, liabClose=0;
+  let curr=0, nonCurr=0;
+  let within1=0, between1and5=0, beyond5=0, undiscTotal=0;
+
+  active.forEach(l=>{
+    const calc = computeLease(l);
+    const commenceInFY = fyKey(l.commencementDate) === fy;
+    // ROU rollforward
+    rouOpen += commenceInFY ? 0 : (new Date(l.commencementDate) < fyStart ? calc.rou : 0);
+    if(commenceInFY) rouAdd += calc.rou;
+    calc.amort.forEach(a=>{ if(a.date>=fyStart && a.date<=fyEnd) rouDep += calc.depPerPeriod; });
+    // subtract prior depreciation from "opening" figure to represent NBV at start of FY
+    let priorDep = 0;
+    calc.amort.forEach(a=>{ if(a.date < fyStart) priorDep += calc.depPerPeriod; });
+    if(new Date(l.commencementDate) < fyStart) rouOpen += -priorDep; // adjust: rouOpen already added gross rou above; subtract accumulated dep before FY
+    // Liability rollforward
+    const openBal = liabilityAsOf(calc, new Date(fyStart.getTime()-86400000));
+    if(!commenceInFY) liabOpen += openBal;
+    if(commenceInFY) liabAdd += calc.liability;
+    calc.amort.forEach(a=>{
+      if(a.date>=fyStart && a.date<=fyEnd){ liabInt += a.interest; liabPay += a.payment; }
+    });
+    const closeBal = liabilityAsOf(calc, fyEnd);
+    liabClose += closeBal;
+    const split = currentNonCurrentSplit(calc, fyEnd);
+    curr += split.current; nonCurr += split.nonCurrent;
+    // maturity analysis (undiscounted), from fyEnd forward
+    calc.amort.forEach(a=>{
+      if(a.date > fyEnd){
+        undiscTotal += a.payment;
+        const monthsOut = (a.date.getFullYear()-fyEnd.getFullYear())*12 + (a.date.getMonth()-fyEnd.getMonth());
+        if(monthsOut <= 12) within1 += a.payment;
+        else if(monthsOut <= 60) between1and5 += a.payment;
+        else beyond5 += a.payment;
+      }
+    });
+  });
+  rouClose = rouOpen + rouAdd - rouDep;
+  const unearnedFinance = undiscTotal - nonCurr - curr;
+  const exemptExpenseFY = exempt.reduce((s,l)=>{
+    const mpp = FREQ_MONTHS[l.frequency];
+    return s + l.paymentAmount*(12/mpp); // annualised approximation for the FY
+  },0);
+  const totalCashOutflow = liabPay;
+
+  c.innerHTML = `
+    <h2 class="section-title">Disclosures — Ind AS 116</h2>
+    <p class="section-sub">Note format, for the year ended ${fmtDate(fyEnd)}</p>
+    <div class="card" style="display:flex;align-items:center;gap:10px;">
+      <label style="font-size:12px;color:var(--ink-muted);">Reporting year</label>
+      <select id="fy-select">${fys.map(k=>`<option value="${k}" ${k===fy?'selected':''}>${fyLabel(k)}</option>`).join('')}</select>
+    </div>
+
+    <div class="disclosure-note">
+      <h3>A. Right-of-Use Assets — Reconciliation of Carrying Amount</h3>
+      <p class="note-desc">All asset classes combined. A class-wise split can be produced on request.</p>
+      <div class="table-scroll"><table class="ledger">
+        <thead><tr><th colspan="2">Particulars</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Balance at the beginning of the year</td><td>${fmtINR(rouOpen)}</td></tr>
+          <tr><td colspan="2">Additions during the year</td><td>${fmtINR(rouAdd)}</td></tr>
+          <tr><td colspan="2">Depreciation for the year</td><td>${fmtINR(-rouDep)}</td></tr>
+          <tr class="total-row"><td colspan="2">Balance at the end of the year</td><td>${fmtINR(rouClose)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="disclosure-note">
+      <h3>B. Lease Liabilities — Reconciliation</h3>
+      <div class="table-scroll"><table class="ledger">
+        <thead><tr><th colspan="2">Particulars</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Balance at the beginning of the year</td><td>${fmtINR(liabOpen)}</td></tr>
+          <tr><td colspan="2">Additions during the year</td><td>${fmtINR(liabAdd)}</td></tr>
+          <tr><td colspan="2">Interest expense (unwinding of discount)</td><td>${fmtINR(liabInt)}</td></tr>
+          <tr><td colspan="2">Lease payments made</td><td>${fmtINR(-liabPay)}</td></tr>
+          <tr class="total-row"><td colspan="2">Balance at the end of the year</td><td>${fmtINR(liabClose)}</td></tr>
+          <tr><td colspan="2">— of which Current</td><td>${fmtINR(curr)}</td></tr>
+          <tr><td colspan="2">— of which Non-Current</td><td>${fmtINR(nonCurr)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="disclosure-note">
+      <h3>C. Maturity Analysis of Lease Liabilities (Undiscounted)</h3>
+      <p class="note-desc">Contractual undiscounted cash outflows as of ${fmtDate(fyEnd)}.</p>
+      <div class="table-scroll"><table class="ledger">
+        <thead><tr><th colspan="2">Bucket</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Not later than 1 year</td><td>${fmtINR(within1)}</td></tr>
+          <tr><td colspan="2">Later than 1 year and not later than 5 years</td><td>${fmtINR(between1and5)}</td></tr>
+          <tr><td colspan="2">Later than 5 years</td><td>${fmtINR(beyond5)}</td></tr>
+          <tr class="total-row"><td colspan="2">Total undiscounted lease payments</td><td>${fmtINR(undiscTotal)}</td></tr>
+          <tr><td colspan="2">Less: Unearned finance charge</td><td>${fmtINR(-unearnedFinance)}</td></tr>
+          <tr class="total-row"><td colspan="2">Present value of lease liabilities</td><td>${fmtINR(curr+nonCurr)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="disclosure-note">
+      <h3>D. Amounts Recognised in the Statement of Profit &amp; Loss</h3>
+      <div class="table-scroll"><table class="ledger">
+        <thead><tr><th colspan="2">Particulars</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Depreciation expense on ROU assets</td><td>${fmtINR(rouDep)}</td></tr>
+          <tr><td colspan="2">Interest expense on lease liabilities</td><td>${fmtINR(liabInt)}</td></tr>
+          <tr><td colspan="2">Expense relating to short-term leases</td><td>${fmtINR(exempt.filter(l=>l.shortTerm).reduce((s,l)=>s+l.paymentAmount*(12/FREQ_MONTHS[l.frequency]),0))}</td></tr>
+          <tr><td colspan="2">Expense relating to low-value asset leases</td><td>${fmtINR(exempt.filter(l=>l.lowValue&&!l.shortTerm).reduce((s,l)=>s+l.paymentAmount*(12/FREQ_MONTHS[l.frequency]),0))}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="disclosure-note">
+      <h3>E. Total Cash Outflow for Leases</h3>
+      <div class="table-scroll"><table class="ledger">
+        <thead><tr><th colspan="2">Particulars</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2">Repayment of lease liabilities (principal + interest)</td><td>${fmtINR(totalCashOutflow)}</td></tr>
+          <tr><td colspan="2">Payments for short-term / low-value leases</td><td>${fmtINR(exemptExpenseFY)}</td></tr>
+          <tr class="total-row"><td colspan="2">Total cash outflow for leases</td><td>${fmtINR(totalCashOutflow+exemptExpenseFY)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <details class="assumption-box">
+      <summary>Basis of preparation</summary>
+      <ul>
+        <li>Financial year taken as 1 April – 31 March, consistent with Indian reporting practice.</li>
+        <li>Current/non-current split for the liability is based on projected balance 12 months from year-end (a rolling reassessment, not the contractual next-12-months cash outflow).</li>
+        <li>Short-term/low-value lease expense figures are annualised approximations based on the payment frequency entered, not day-counted for partial years.</li>
+        <li>This note aggregates all leases into a single class; break by asset class if required for statutory disclosure granularity.</li>
+      </ul>
+    </details>
+  `;
+}
+
+/* ---------- Sensitivity ---------- */
+function renderSensitivity(c){
+  const active = STATE.leases.filter(l=>!l.shortTerm && !l.lowValue);
+  if(!active.length){
+    c.innerHTML = `<div class="empty-state"><h3>No capitalised leases yet</h3><p>Sensitivity analysis needs at least one lease with a discount rate and term.</p></div>`;
+    return;
+  }
+  if(!STATE.sensLeaseId || !active.find(l=>l.id===STATE.sensLeaseId)) STATE.sensLeaseId = active[0].id;
+  const lease = active.find(l=>l.id===STATE.sensLeaseId);
+  const base = computeLease(lease);
+
+  const rateDelta = 1; // 1 percentage point
+  const upRate = computeLease({...lease, discountRate: lease.discountRate+rateDelta});
+  const downRate = computeLease({...lease, discountRate: Math.max(0,lease.discountRate-rateDelta)});
+  const termDelta = 12;
+  const upTerm = computeLease({...lease, termMonths: lease.termMonths+termDelta});
+  const downTerm = computeLease({...lease, termMonths: Math.max(FREQ_MONTHS[lease.frequency], lease.termMonths-termDelta)});
+
+  function row(label, calc){
+    const dLiab = calc.liability - base.liability;
+    const dRou = calc.rou - base.rou;
+    return `<tr>
+      <td>${label}</td>
+      <td>${fmtINR(calc.liability)}</td>
+      <td style="color:${dLiab>=0?'var(--negative)':'var(--positive)'}">${dLiab>=0?'+':''}${fmtINR(dLiab)}</td>
+      <td>${fmtINR(calc.rou)}</td>
+      <td style="color:${dRou>=0?'var(--negative)':'var(--positive)'}">${dRou>=0?'+':''}${fmtINR(dRou)}</td>
+    </tr>`;
+  }
+
+  c.innerHTML = `
+    <h2 class="section-title">Sensitivity Analysis</h2>
+    <p class="section-sub">Impact of key judgemental inputs on initial recognition</p>
+    <div class="card" style="display:flex;align-items:center;gap:10px;">
+      <label style="font-size:12px;color:var(--ink-muted);">Lease</label>
+      <select id="sens-lease-select">${active.map(l=>`<option value="${l.id}" ${l.id===lease.id?'selected':''}>${escapeHtml(l.name||'Untitled')}</option>`).join('')}</select>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><div class="label">Base IBR</div><div class="value">${fmtNum(lease.discountRate,2)}%</div></div>
+      <div class="stat"><div class="label">Base Term</div><div class="value">${lease.termMonths} mo</div></div>
+      <div class="stat"><div class="label">Base Liability</div><div class="value">${fmtINR(base.liability)}</div></div>
+      <div class="stat"><div class="label">Base ROU</div><div class="value">${fmtINR(base.rou)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Discount Rate &amp; Term Sensitivity</div>
+      <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr><th>Scenario</th><th>Liability</th><th>Δ vs Base</th><th>ROU Asset</th><th>Δ vs Base</th></tr></thead>
+        <tbody>
+          ${row('Base case', base)}
+          ${row(`IBR +${rateDelta}pp (${fmtNum(lease.discountRate+rateDelta,2)}%)`, upRate)}
+          ${row(`IBR −${rateDelta}pp (${fmtNum(Math.max(0,lease.discountRate-rateDelta),2)}%)`, downRate)}
+          ${row(`Term +${termDelta} months`, upTerm)}
+          ${row(`Term −${termDelta} months`, downTerm)}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="sens-grid">
+      <div class="card">
+        <div class="card-title">Reading this table</div>
+        <p style="font-size:12.5px;color:var(--ink-muted);">A higher IBR discounts future payments more heavily, lowering both the initial liability and ROU asset. A longer term increases both, since more payments are captured — the effect is partly offset by discounting on the added periods.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Practical use</div>
+        <p style="font-size:12.5px;color:var(--ink-muted);">Useful for stress-testing IBR judgement calls before finalising a client's rate, or for illustrating materiality of a rate dispute to an auditor or the CFO.</p>
+      </div>
+    </div>
+  `;
+}
+
+/* ======================= EVENT HANDLING ======================= */
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+function attachGlobalListeners(){
+  document.body.onclick = (e)=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const action = btn.dataset.action;
+    if(action==='goto-view'){ STATE.view = btn.dataset.id; render(); }
+    else if(action==='goto-lease'){ e.preventDefault(); STATE.view = btn.dataset.id; STATE.leaseSubTab='inputs'; render(); }
+    else if(action==='new-lease'){ STATE.leases.push(blankLease()); STATE.view = STATE.leases[STATE.leases.length-1].id; STATE.leaseSubTab='inputs'; saveState(); render(); }
+    else if(action==='lease-subtab'){ STATE.leaseSubTab = btn.dataset.tab; render(); }
+    else if(action==='delete-lease'){
+      if(confirm('Delete this lease? This cannot be undone.')){
+        STATE.leases = STATE.leases.filter(l=>l.id!==btn.dataset.id);
+        STATE.view='portfolio'; saveState(); render();
+      }
+    }
+    else if(action==='export-portfolio'){ exportPortfolio(); }
+    else if(action==='export-excel'){ exportExcel(); }
+    else if(action==='download-template'){ downloadImportTemplate(); }
+  };
+
+  document.getElementById('import-input').onchange = (e)=>{
+    if(e.target.files && e.target.files[0]) importPortfolio(e.target.files[0]);
+  };
+  const xin = document.getElementById('excel-import-input');
+  if(xin){
+    xin.onchange = (e)=>{
+      if(e.target.files && e.target.files[0]) importExcel(e.target.files[0]);
+    };
+  }
+
+  document.body.onsubmit = (e)=>{
+    if(e.target.id !== 'lease-form') return;
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const lease = STATE.leases.find(l=>l.id===STATE.view);
+    if(!lease) return;
+    lease.name = fd.get('name')||'';
+    lease.lessor = fd.get('lessor')||'';
+    lease.assetClass = fd.get('assetClass');
+    lease.commencementDate = fd.get('commencementDate');
+    lease.termMonths = parseFloat(fd.get('termMonths'))||1;
+    lease.frequency = fd.get('frequency');
+    lease.timing = fd.get('timing');
+    lease.paymentAmount = parseFloat(fd.get('paymentAmount'))||0;
+    lease.escalationPct = parseFloat(fd.get('escalationPct'))||0;
+    lease.discountRate = parseFloat(fd.get('discountRate'))||0;
+    lease.idc = parseFloat(fd.get('idc'))||0;
+    lease.prepayments = parseFloat(fd.get('prepayments'))||0;
+    lease.incentives = parseFloat(fd.get('incentives'))||0;
+    lease.shortTerm = fd.get('shortTerm')==='on';
+    lease.lowValue = fd.get('lowValue')==='on';
+    saveState();
+    STATE.leaseSubTab = 'schedule';
+    render();
+  };
+
+  document.body.onchange = (e)=>{
+    if(e.target.id==='fy-select'){ STATE.selectedFY = e.target.value; render(); }
+    if(e.target.id==='sens-lease-select'){ STATE.sensLeaseId = e.target.value; render(); }
+  };
+}
+
+loadState();
+</script>
+</body>
+</html>
